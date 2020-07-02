@@ -1,0 +1,71 @@
+
+
+import numpy as np
+import pandas as pd
+amz = pd.read_csv("Amazon - Movies and TV Ratings.csv")
+
+x = amz.replace(np.NAN, 0, inplace=False)
+x1 = x.drop(['user_id'], axis = 1)
+
+x1[x1>0] = 1
+
+x1.loc['Views'] = x1.select_dtypes(pd.np.number).sum()
+
+vws = x1.loc[['Views'], :]
+vws = vws.transpose()
+
+
+import matplotlib.pyplot as plt
+
+vws.Views.plot.hist(bins=50)
+plt.title("Distribution of Views")
+plt.ylabel('Views')
+plt.xlabel('Movies')
+plt.show()
+
+x2 = amz.replace(np.NAN, 0, inplace=False)
+x2 = x2.drop(['user_id'], axis = 1)
+x2.loc['Rating'] = x2.select_dtypes(pd.np.number).sum()
+rat = x2.loc[['Rating'], :]
+rat = rat.transpose()
+
+x3 = rat['Rating']/vws['Views']
+
+plt.hist(x3, bins=50)
+final = pd.concat([rat,vws,x3], axis=1)
+
+
+
+#most viewed movies
+final.sort_values('Views', ascending=False).head(10)
+#Highest rated movies
+final.sort_values(0, ascending=False).head(10)
+
+
+#relationship between rating of movie and number of ratings
+import seaborn as sns
+sns.jointplot(x='Rating', y='Views', data=final)
+
+
+#recommender system
+import random as rnd
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+
+#Create train and test data set
+x_train, x_test, y_train, y_test = train_test_split(vws,rat,test_size=0.33,random_state=0)
+from sklearn.linear_model import LinearRegression
+lreg = LinearRegression()
+lreg.fit(x_train, y_train)
+
+#Predict the Test result
+rec_pred = lreg.predict(x_test)
+#visulaize the results
+plt.scatter(x_train, y_train)
+plt.plot(x_train, lreg.predict(x_train))
+plt.title('Views vs Ratings Training')
+plt.xlabel('Views')
+plt.ylabel('Ratings')
+plt.show()
+__main__:10: FutureWarning: The pandas.np module is deprecated and will be removed from pandas in a future version. Import numpy directly instead
+__main__:26: FutureWarning: The pandas.np module is deprecated and will be removed from pandas in a future version. Import numpy directly instead
